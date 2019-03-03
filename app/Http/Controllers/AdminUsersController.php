@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use App\User;
 
 class AdminUsersController extends Controller
 {
@@ -14,7 +17,9 @@ class AdminUsersController extends Controller
     public function index()
     {
         //
-        return view('admin.users.index');
+        $infoFromPrevious = session('infoFromPrevious');
+        $users = User::all();
+        return view('admin.users.index', compact('users', 'infoFromPrevious'));
     }
 
     /**
@@ -25,7 +30,16 @@ class AdminUsersController extends Controller
     public function create()
     {
         //
-        return view('admin.users.create');
+        $roles = Role::all();
+        $roleData = [];
+        if(count($roles) > 0){
+            foreach ($roles as $role){
+                $roleData[$role->id] = $role->name;
+            }
+        }
+
+        $activeData = ['0' => 'Inactive', '1' => 'Active'];
+        return view('admin.users.create', compact('roleData', 'activeData'));
     }
 
     /**
@@ -37,6 +51,14 @@ class AdminUsersController extends Controller
     public function store(Request $request)
     {
         //
+        $request['password'] = bcrypt($request->password);
+        //code for exception. not implemented
+//        $result = [ 'info' => 'There is problem during process, your data was not saved.', 'classFlag' => 'danger'];
+        $user = (User::create($request->all()));
+        if(!empty($user))
+            $result = [ 'info' => 'User data [' . $request->name . '] saved successfully.', 'classFlag' => 'success'];
+        $request->session()->flash('infoFromPrevious', $result);
+        return redirect('admin/users');
     }
 
     /**
