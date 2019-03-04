@@ -39,7 +39,7 @@ class AdminUsersController extends Controller
      */
     public function create()
     {
-        //
+        //Retrieve role data and setup active data
         $roleData = Role::pluck('name', 'id');
         $activeData = ['0' => 'Inactive', '1' => 'Active'];
         return view('admin.users.create', compact('roleData', 'activeData'));
@@ -55,7 +55,8 @@ class AdminUsersController extends Controller
     {
         //Prepare data from request
         $request['password'] = bcrypt($request->password);
-        $request['profile_picture'] = $request->file('profile_picture_file')->store('public/files/pictures/profile');
+        if($file = $request->file('profile_picture_file'))
+            $request['profile_picture'] = $file->store('public/files/pictures/profile');
 
         //Persist data into DB
         $user = (User::create($request->all()));
@@ -89,8 +90,17 @@ class AdminUsersController extends Controller
      */
     public function edit($id)
     {
-        //
-        return view('admin.users.edit');
+        //Retrieve user info and convert file location to url
+        $user = User::findOrFail($id);
+        $user->profile_picture = Storage::url($user->profile_picture);
+
+        //Set default values (1.Default avatar url)
+        $default = ['defaultProfilePicture' => Storage::url('public/files/pictures/profile/default.png')];
+
+        //Retrieve role data and setup active data
+        $roleData = Role::pluck('name', 'id');
+        $activeData = ['0' => 'Inactive', '1' => 'Active'];
+        return view('admin.users.edit', compact('user', 'roleData', 'activeData', 'default'));
     }
 
     /**
@@ -102,7 +112,26 @@ class AdminUsersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        //Prepare data from request
+        if($file = $request->file('profile_picture_file'))
+            $request['profile_picture'] = $file->store('public/files/pictures/profile');
+
+        //Persist data into DB
+        $user = User::whereId($id)->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role_id' => $request->role_id,
+            'is_active' => $request->is_active,
+            'profile_picture' => $request->profile_picture,
+        ]);
+
+        //Flash success notice to the next request
+        if($user)
+            $result = [ 'info' => 'User data [' . $request->name . '] updated successfully.', 'classFlag' => 'success'];
+        $request->session()->flash('infoFromPrevious', $result);
+
+        //Redirect to index page
+        return redirect('admin/users');
     }
 
     /**

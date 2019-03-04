@@ -19,6 +19,7 @@
             <th scope="col">Active</th>
             <th scope="col">Created</th>
             <th scope="col">Updated</th>
+            <th scope="col">Action</th>
         </tr>
         </thead>
         <tbody>
@@ -35,6 +36,11 @@
                     <td>{{$user->is_active ? 'Active' : 'Inactive'}}</td>
                     <td>{{$user->created_at->diffForHumans()}}</td>
                     <td>{{$user->updated_at->diffForHumans()}}</td>
+                    <td>
+                        <form>
+                            <button style="font-size: 1rem;" class="btn btn-primary" formaction="{{route('users.edit', ['user' => $user->id])}}">Edit</button>
+                        </form>
+                    </td>
                 </tr>
             @endforeach
         @else

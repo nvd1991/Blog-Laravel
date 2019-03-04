@@ -123,11 +123,12 @@
                         <a href="#"><i class="fa fa-wrench fa-fw"></i>Users<span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level">
                             <li>
-                                <a href="/admin/users">All Users</a>
+                                {{--use route to be more robust, we can change route later while the mapped resource aliase wont change--}}
+                                <a href="{{route('users.index')}}">All Users</a>
                             </li>
 
                             <li>
-                                <a href="/admin/users/create">Create User</a>
+                                <a href="{{route('users.create')}}">Create User</a>
                             </li>
 
                         </ul>
