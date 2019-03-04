@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UsersRequest;
 use App\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use App\User;
+use Illuminate\Support\Facades\Storage;
 
 class AdminUsersController extends Controller
 {
@@ -18,8 +20,16 @@ class AdminUsersController extends Controller
     {
         //
         $infoFromPrevious = session('infoFromPrevious');
+
+        //Retrieve user info and convert file location to url
         $users = User::all();
-        return view('admin.users.index', compact('users', 'infoFromPrevious'));
+        foreach ($users as $user){
+            $user->profile_picture = Storage::url($user->profile_picture);
+        }
+
+        //Set default values (1.Default avatar url)
+        $default = ['defaultProfilePicture' => Storage::url('public/files/pictures/profile/default.png')];
+        return view('admin.users.index', compact('users', 'infoFromPrevious', 'default'));
     }
 
     /**
@@ -30,14 +40,7 @@ class AdminUsersController extends Controller
     public function create()
     {
         //
-        $roles = Role::all();
-        $roleData = [];
-        if(count($roles) > 0){
-            foreach ($roles as $role){
-                $roleData[$role->id] = $role->name;
-            }
-        }
-
+        $roleData = Role::pluck('name', 'id');
         $activeData = ['0' => 'Inactive', '1' => 'Active'];
         return view('admin.users.create', compact('roleData', 'activeData'));
     }
@@ -48,16 +51,21 @@ class AdminUsersController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UsersRequest $request)
     {
-        //
+        //Prepare data from request
         $request['password'] = bcrypt($request->password);
-        //code for exception. not implemented
-//        $result = [ 'info' => 'There is problem during process, your data was not saved.', 'classFlag' => 'danger'];
+        $request['profile_picture'] = $request->file('profile_picture_file')->store('public/files/pictures/profile');
+
+        //Persist data into DB
         $user = (User::create($request->all()));
+
+        //Flash success notice to the next request
         if(!empty($user))
             $result = [ 'info' => 'User data [' . $request->name . '] saved successfully.', 'classFlag' => 'success'];
         $request->session()->flash('infoFromPrevious', $result);
+
+        //Redirect to index page
         return redirect('admin/users');
     }
 

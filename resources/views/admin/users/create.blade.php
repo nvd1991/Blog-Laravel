@@ -4,7 +4,9 @@
 @section('content')
     <h1>Create user</h1>
     <br>
-    {!! Form::open([ 'method' => 'post', 'action' => 'AdminUsersController@store']) !!}
+    @include('includes.form_error')
+
+    {!! Form::open([ 'method' => 'post', 'action' => 'AdminUsersController@store', 'files' => true]) !!}
         <div class="form-row">
             <div class="form-group col-md-6">
                 {!! Form::label('name', 'Username') !!}
@@ -26,7 +28,15 @@
             </div>
             <div class="form-group col-md-3">
                 {!! Form::label('is_active', 'Active Status') !!}
-                {!! Form::select('is_active', $activeData, null, ['class' => 'form-control', 'placeholder' => 'Pick a status']) !!}
+                {!! Form::select('is_active', $activeData, 0, ['class' => 'form-control']) !!}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <div class="custom-file">
+                    {!! Form::file('profile_picture_file', ['class' => 'custom-file-input']) !!}
+                    {!! Form::label('profile_picture_file', 'Profile picture', ['class' => 'custom-file-label']) !!}
+                </div>
             </div>
         </div>
         <div class="form-row">
