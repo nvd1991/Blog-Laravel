@@ -31,7 +31,7 @@
                              src="{{asset($post->post_photo) != asset('/storage/') ? asset($post->post_photo) : asset($default['defaultPostPhoto'])}}"
                              alt="post photo"></td>
                     <td>{{$post->title}}</td>
-                    <td>{{$post->body}}</td>
+                    <td>{{Str::limit($post->body, 40)}}</td>
                     <td>{{$post->user->name}}</td>
                     <td>{{$post->category->name}}</td>
                     <td>{{$post->created_at->diffForHumans()}}</td>

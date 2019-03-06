@@ -7,6 +7,7 @@ use App\Http\Requests\PostsRequest;
 use App\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 
 class PostsController extends Controller
@@ -91,6 +92,16 @@ class PostsController extends Controller
     public function edit($id)
     {
         //
+        //Retrieve post info and convert file location to url
+        $post = Post::findOrFail($id);
+        $post->post_photo = Storage::url($post->post_photo);
+
+        //Set default values (1.Default post photo url)
+        $default = ['defaultPostPhoto' => Storage::url('public/files/pictures/post/default.png')];
+
+        //Retrieve role data and setup active data
+        $categoryData = Category::pluck('name', 'id');
+        return view('admin.posts.edit', compact('post', 'categoryData', 'default'));
     }
 
     /**
@@ -103,6 +114,22 @@ class PostsController extends Controller
     public function update(Request $request, $id)
     {
         //
+        //Prepare data from request
+        $input = $request->all();
+        if($file = $request->file('post_photo_file'))
+            $input['post_photo'] = $file->store('public/files/pictures/post');
+
+        //Persist data into DB
+        //Solution 2: remember posts() return "relationship object" not "data object"
+        $update = Auth::user()->posts()->whereId($id)->first()->update($input);
+
+        //Flash success notice to the next request
+        if($update)
+            $result = [ 'info' => 'Post data [' . $request->title . '] updated successfully.', 'classFlag' => 'success'];
+        $request->session()->flash('infoFromPrevious', $result);
+
+        //Redirect to index page
+        return redirect('admin/posts');
     }
 
     /**
@@ -114,5 +141,17 @@ class PostsController extends Controller
     public function destroy($id)
     {
         //
+        $post = Post::findOrFail($id);
+        $post_photo = $post->post_photo;
+        if ($post->delete()) {
+            Storage::delete($post_photo);
+            $result = [ 'info' => 'Post data deleted successfully.', 'classFlag' => 'success'];
+        } else {
+            $result = [ 'info' => 'Post data was not deleted successfully. There was some errors.', 'classFlag' => 'danger'];
+        }
+
+        session()->flash('infoFromPrevious', $result);
+
+        return redirect('admin/posts');
     }
 }
