@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UsersRequest;
 use App\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use App\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AdminUsersController extends Controller
@@ -113,20 +115,22 @@ class AdminUsersController extends Controller
     public function update(Request $request, $id)
     {
         //Prepare data from request
+        $input = $request->all();
         if($file = $request->file('profile_picture_file'))
-            $request['profile_picture'] = $file->store('public/files/pictures/profile');
+            $input['profile_picture'] = $file->store('public/files/pictures/profile');
+        if(isset($request->password)){
+            $input['password'] = bcrypt($request->password);
+        } else {
+            unset($input['password']);
+        }
 
         //Persist data into DB
-        $user = User::whereId($id)->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role_id' => $request->role_id,
-            'is_active' => $request->is_active,
-            'profile_picture' => $request->profile_picture,
-        ]);
+        //Use findOrfail and update($input), if you use User::where()->update($input) it will NOT work!!
+        $user = User::findOrFail($id);
+        $update = $user->update($input);
 
         //Flash success notice to the next request
-        if($user)
+        if($update)
             $result = [ 'info' => 'User data [' . $request->name . '] updated successfully.', 'classFlag' => 'success'];
         $request->session()->flash('infoFromPrevious', $result);
 
@@ -140,8 +144,24 @@ class AdminUsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         //
+        if(Auth::user()->id != $id) {
+            $user = User::findOrFail($id);
+            $profile_picture = $user->profile_picture;
+            if ($user->delete()) {
+                Storage::delete($profile_picture);
+                $result = [ 'info' => 'User data deleted successfully.', 'classFlag' => 'success'];
+            } else {
+                $result = [ 'info' => 'User data was not deleted successfully. There was some errors.', 'classFlag' => 'danger'];
+            }
+        } else {
+            //Block from deleting your own account
+            $result = [ 'info' => 'You can not delete your own account', 'classFlag' => 'danger'];
+        }
+        $request->session()->flash('infoFromPrevious', $result);
+
+        return redirect('admin/users');
     }
 }

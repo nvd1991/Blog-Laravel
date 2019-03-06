@@ -37,8 +37,13 @@
                     <td>{{$user->created_at->diffForHumans()}}</td>
                     <td>{{$user->updated_at->diffForHumans()}}</td>
                     <td>
-                        <form>
+                        <form style="display: inline-block">
                             <button style="font-size: 1rem;" class="btn btn-primary" formaction="{{route('users.edit', ['user' => $user->id])}}">Edit</button>
+                        </form>
+                        <form style="display: inline-block" method="post">
+                            <input type="hidden" name="_method" value="DELETE">
+                            {{csrf_field()}}
+                            <button style="font-size: 1rem;" class="btn btn-danger" formaction="{{route('users.destroy', ['user' => $user->id])}}">Delete</button>
                         </form>
                     </td>
                 </tr>

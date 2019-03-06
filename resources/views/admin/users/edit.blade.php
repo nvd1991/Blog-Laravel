@@ -25,7 +25,7 @@
             <div class="form-row">
                 <div class="form-group col-md-6">
                     {!! Form::label('password', 'Password') !!}
-                    {!! Form::password('password', ['class' => 'form-control', 'placeholder' => 'Password', 'readonly' => 'readonly']) !!}
+                    {!! Form::password('password', ['class' => 'form-control', 'placeholder' => 'Password']) !!}
                 </div>
                 <div class="form-group col-md-3">
                     {!! Form::label('role_id', 'Role') !!}
